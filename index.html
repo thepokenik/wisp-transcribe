@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="pt-BR">
+	<meta charset="utf-8" /><meta
+		name="viewport"
+		content="width=device-width"
+	/>
+	<title>Wisp Transcribe</title>
+	<style>
+		body {
+			font: 17px system-ui;
+			max-width: 720px;
+			margin: 50px auto;
+			padding: 0 24px;
+			background: #f5f5f1;
+			color: #202d35;
+		}
+		label {
+			display: block;
+			margin: 20px 0;
+		}
+		input,
+		textarea,
+		button {
+			font: inherit;
+			padding: 10px;
+			box-sizing: border-box;
+			width: 100%;
+		}
+		button {
+			cursor: pointer;
+			background: #174e45;
+			color: white;
+			border: 0;
+			border-radius: 6px;
+		}
+		pre {
+			white-space: pre-wrap;
+			overflow-wrap: anywhere;
+		}
+		a {
+			margin-right: 20px;
+		}
+	</style>
+	<h1>Wisp Transcribe</h1>
+	<p>
+		Envie um arquivo e acompanhe a transcrição. O processamento ocorre no
+		servidor.
+	</p>
+	<form id="form">
+		<label
+			>Chave de acesso<input
+				id="key"
+				type="password"
+				required
+				autocomplete="off"
+		/></label>
+		<label
+			>Arquivo<input
+				id="file"
+				type="file"
+				accept="audio/*,video/*"
+				required
+		/></label>
+		<label
+			>Idioma (vazio para detectar)<input
+				id="language"
+				value="pt"
+				maxlength="10"
+		/></label>
+		<label
+			>Contexto opcional<textarea
+				id="prompt"
+				maxlength="2000"
+				placeholder="Nomes e termos técnicos esperados"
+			></textarea>
+		</label>
+		<button id="submit">Transcrever</button>
+	</form>
+	<label>ID para consultar uma transcrição anterior<input id="jobId" /></label
+	><button id="consult">Consultar</button>
+	<pre id="status" role="status"></pre>
+	<div id="downloads"></div>
+	<script>
+		const el = (id) => document.getElementById(id);
+		let generation = 0;
+		async function request(url, options = {}) {
+			const response = await fetch(url, {
+				...options,
+				headers: {
+					Authorization: "Bearer " + el("key").value,
+					...options.headers,
+				},
+			});
+			if (!response.ok) {
+				let value = await response.json();
+				throw Error(value.error || "Erro no servidor");
+			}
+			return response;
+		}
+		async function follow(id) {
+			const current = ++generation;
+			el("downloads").replaceChildren();
+			try {
+				while (current === generation) {
+					const job = await (
+						await request("/jobs/" + encodeURIComponent(id))
+					).json();
+					if (current !== generation) return;
+					el("status").textContent =
+						`ID: ${id}\nEstado: ${job.state}\nÁudio processado: ${job.processed_seconds}s`;
+					if (job.state === "failed") throw Error(job.error);
+					if (job.state === "completed") {
+						for (const format of ["txt", "jsonl", "manifest"]) {
+							const button = document.createElement("button");
+							button.textContent =
+								format === "manifest"
+									? "Baixar manifesto"
+									: "Baixar " + format.toUpperCase();
+							button.onclick = async () => {
+								try {
+									const blob = await (
+										await request(
+											"/jobs/" + id + "/" + format,
+										)
+									).blob();
+									const url = URL.createObjectURL(blob);
+									const a = document.createElement("a");
+									a.href = url;
+									a.download =
+										"transcricao-" +
+										id +
+										"." +
+										(format === "manifest"
+											? "json"
+											: format);
+									a.click();
+									setTimeout(
+										() => URL.revokeObjectURL(url),
+										1000,
+									);
+								} catch (e) {
+									el("status").textContent = e.message;
+								}
+							};
+							el("downloads").append(button);
+						}
+						return;
+					}
+					await new Promise((resolve) => setTimeout(resolve, 3000));
+				}
+			} catch (e) {
+				el("status").textContent += "\n" + e.message;
+			}
+		}
+		el("form").onsubmit = async (event) => {
+			event.preventDefault();
+			el("submit").disabled = true;
+			el("status").textContent = "Enviando arquivo…";
+			try {
+				const params = new URLSearchParams({
+					language: el("language").value,
+					prompt: el("prompt").value,
+				});
+				const job = await (
+					await request("/jobs?" + params, {
+						method: "POST",
+						body: el("file").files[0],
+						headers: { "Content-Type": "application/octet-stream" },
+					})
+				).json();
+				el("jobId").value = job.id;
+				follow(job.id);
+			} catch (e) {
+				el("status").textContent = e.message;
+			} finally {
+				el("submit").disabled = false;
+			}
+		};
+		el("consult").onclick = () => follow(el("jobId").value.trim());
+	</script>
+</html>

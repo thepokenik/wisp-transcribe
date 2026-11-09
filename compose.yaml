@@ -1,0 +1,18 @@
+services:
+  transcription:
+    build: .
+    ports:
+      - "${BIND_ADDRESS:-127.0.0.1}:8000:8000"
+    environment:
+      TRANSCRIPTION_API_KEY: ${TRANSCRIPTION_API_KEY:?Defina a chave no arquivo .env}
+      WHISPER_MODEL: ${WHISPER_MODEL:-small}
+      CPU_THREADS: ${CPU_THREADS:-8}
+      BATCH_SIZE: ${BATCH_SIZE:-8}
+      MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-500}
+      MAX_QUEUE: ${MAX_QUEUE:-10}
+      CONNECTION_TIMEOUT: ${CONNECTION_TIMEOUT:-300}
+    volumes:
+      - transcription-data:/data
+    restart: unless-stopped
+volumes:
+  transcription-data:

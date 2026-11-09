@@ -1,0 +1,11 @@
+.env
+.venv
+.venv-cli
+data
+__pycache__
+.git
+cli
+skills
+build
+*.egg-info
+.e2e-*
