@@ -9,7 +9,7 @@ Interpret a transcript the user provides. This skill is self-contained: it does 
 
 ## Read the input
 
-Accept the transcript as pasted text, a `.txt` file, a `.jsonl` file with `start`, `end` and `text` fields, or block files from a previous transcription. Read the whole source, or sample it consistently if it is too large for one pass. Do not fetch the original media or reconstruct missing words.
+Accept the transcript as pasted text, a `.txt` file, a `.jsonl` file with `start`, `end` and `text` fields, or block files from a previous transcription. Cover the whole source, using incremental summaries for long inputs. If only part is accessible, state the coverage and limit conclusions to that part. Do not fetch the original media or reconstruct missing words.
 
 Derive the objective, output format, language and depth from the request. If the request is silent, produce a concise summary in the transcript's language; do not ask for choices that do not change the result. Follow an explicit format (prose, bullets, table, JSON, meeting notes, executive brief) without adding fixed sections the user did not ask for.
 
