@@ -11,7 +11,8 @@ Conteúdo principal:
 | `service.py` | Servidor HTTP e worker de transcrição |
 | `index.html` | Interface web em `/` |
 | `cli/` | Pacote Python da CLI `transcribe`, sem dependências externas |
-| `skills/transcrever-e-resumir/` | Skill de agente para transcrever, retomar e resumir |
+| `AGENTS.md` | Contexto do projeto e orientação para agentes de qualquer provedor |
+| `skills/wisp-transcribe/` | Skill em inglês para transcrever e resumir |
 
 ## Docker (recomendado)
 
@@ -153,7 +154,11 @@ O resumo é responsabilidade do agente. Isso permite usar o mesmo serviço com d
 
 ## Skill de agente
 
-A skill [`skills/transcrever-e-resumir/SKILL.md`](skills/transcrever-e-resumir/SKILL.md) descreve o fluxo transcrever → aguardar → ler arquivos → resumir, incluindo retomada, códigos de saída e regras para não completar informações ausentes. Copie a pasta para o diretório de skills do agente ou aponte o agente para o arquivo.
+A skill [`skills/wisp-transcribe/SKILL.md`](skills/wisp-transcribe/SKILL.md) descreve o objetivo, contrato essencial e retomada em inglês. Substitui a antiga pasta `transcrever-e-resumir`; atualize referências ou instalações locais. O comando `transcribe` permanece igual.
+
+Use [`AGENTS.md`](AGENTS.md) como ponto de entrada. Se o agente não reconhecer AGENTS.md ou skills, peça explicitamente que leia os dois arquivos como Markdown. Basta ter terminal, acesso a arquivos e conexão HTTP com o serviço; não é necessário SDK ou integração com um provedor de LLM. Ao copiar a skill separadamente, mantenha acesso ao README e REVIEW indicados nas referências.
+
+O [roteiro de sessão isolada](docs/agent-smoke-test.md) descreve preparação, prompt e critérios observáveis para testar com qualquer agente compatível.
 
 ## API
 
