@@ -12,7 +12,8 @@ Conteúdo principal:
 | `index.html` | Interface web em `/` |
 | `cli/` | Pacote Python da CLI `transcribe`, sem dependências externas |
 | `AGENTS.md` | Contexto do projeto e orientação para agentes de qualquer provedor |
-| `skills/wisp-transcribe/` | Skill em inglês para transcrever e resumir |
+| `skills/wisp-transcribe/` | Skill em inglês para transcrever e salvar resultados |
+| `skills/summarize-transcript/` | Skill em inglês, independente, para resumir transcrições existentes |
 
 ## Docker (recomendado)
 
@@ -150,15 +151,27 @@ Cada `fetch` grava:
 - `manifest.json`: metadados do servidor, caminhos absolutos locais, origem e lista de blocos.
 - `blocks/block-NNNN.txt` e `blocks/block-NNNN.jsonl`: blocos com timestamps preservados, quando `--block-seconds` é maior que zero. O texto do bloco usa `[HH:MM:SS]` em cada linha.
 
-O resumo é responsabilidade do agente. Isso permite usar o mesmo serviço com diferentes modelos e formatos de resumo.
+O resumo é responsabilidade do agente e não é produzido pelo serviço; a skill `summarize-transcript` orienta essa interpretação sem depender da Wisp.
 
-## Skill de agente
+## Skills de agente
 
-A skill [`skills/wisp-transcribe/SKILL.md`](skills/wisp-transcribe/SKILL.md) descreve o objetivo, contrato essencial e retomada em inglês. Substitui a antiga pasta `transcrever-e-resumir`; atualize referências ou instalações locais. O comando `transcribe` permanece igual.
+Duas skills em inglês separam transcrição de interpretação:
 
-Use [`AGENTS.md`](AGENTS.md) como ponto de entrada. Se o agente não reconhecer AGENTS.md ou skills, peça explicitamente que leia os dois arquivos como Markdown. Basta ter terminal, acesso a arquivos e conexão HTTP com o serviço; não é necessário SDK ou integração com um provedor de LLM. Ao copiar a skill separadamente, mantenha acesso ao README e REVIEW indicados nas referências.
+| Pedido | Skill |
+| --- | --- |
+| "Transcreva este vídeo" | [`wisp-transcribe`](skills/wisp-transcribe/SKILL.md) |
+| "Resuma esta transcrição" | [`summarize-transcript`](skills/summarize-transcript/SKILL.md) |
+| "Transcreva e resuma" | Ambas, nessa ordem |
 
-O [roteiro de sessão isolada](docs/agent-smoke-test.md) descreve preparação, prompt e critérios observáveis para testar com qualquer agente compatível.
+`wisp-transcribe` mantém configuração, `doctor`, envio, acompanhamento, retomada e download. A conclusão entrega ID, estado e caminhos de TXT, JSONL e manifesto; a skill não resume nem altera timestamps, que ficam preservados para usos posteriores.
+
+`summarize-transcript` aceita texto, TXT, JSONL ou blocos de uma transcrição existente, sem exigir Wisp, CLI, credenciais ou rede. Adapta objetivo, formato, idioma e profundidade ao pedido, distingue fatos de inferências, sinaliza ambiguidades e só usa referências temporais presentes na fonte. Não impõe um template de resumo.
+
+No fluxo combinado, a segunda skill recebe os arquivos produzidos pela primeira depois da conclusão. Nenhuma skill carrega a outra obrigatoriamente. A antiga pasta `transcrever-e-resumir` continua substituída por estas duas; atualize referências ou instalações locais. O comando `transcribe` permanece igual.
+
+Use [`AGENTS.md`](AGENTS.md) como ponto de entrada. Se o agente não reconhecer AGENTS.md ou skills, peça explicitamente que leia os arquivos como Markdown. Para transcrever, basta terminal, acesso a arquivos e conexão HTTP com o serviço; para resumir, basta o conteúdo da transcrição. Não é necessário SDK ou integração com um provedor de LLM. Ao copiar a skill de transcrição separadamente, mantenha acesso ao README e REVIEW indicados nas referências.
+
+O [roteiro de sessão isolada](docs/agent-smoke-test.md) descreve preparação, prompts e critérios observáveis para os três pedidos.
 
 ## API
 
@@ -214,5 +227,7 @@ Dependências do servidor: faster-whisper 1.2.1 e PyAV 16.0.1 fixados para evita
 ## Revisão e validação
 
 Na revisão de 2026-11-09 passaram: compilação Python, configuração Compose, build Docker, build e instalação isolada do pacote `wisp-transcribe-cli`, e integração CLI/API em localhost com transcritor simulado. Foram exercitados os seis comandos, detecção automática por idioma vazio, manifesto, blocos, repetição idempotente, erros JSON de argumentos, recusa de timeout NaN, mídia inválida e preservação do ID após falha de conexão. As verificações foram temporárias, sem adicionar testes versionados.
+
+Na revisão das skills, também em 2026-11-09, passaram: estrutura e referências Markdown, roteamento dos três pedidos, resumo de TXT sem timestamps (sem inventar horários, com ambiguidades e instrução embutida sinalizadas), resumo de JSONL no formato pedido, transcrição sem resumo e fluxo combinado com a CLI contra um serviço simulado. A simulação valida artefatos e aderência às instruções, não precisão do Whisper.
 
 Ainda é necessário validar uma gravação falada representativa pelo pacote instalado; a integração simulada não avalia precisão ou desempenho do Whisper. Consulte [REVIEW.md](REVIEW.md) para a comparação com o plano, correções, pendências e compatibilidade. Nenhum serviço permanente foi iniciado ou publicado.

@@ -9,7 +9,7 @@ O plano de uso agêntico está implementado para um serviço interno com um work
 | Retomada por ID, timeout sem cancelar tarefa | Implementada; falhas HTTP na espera e download de run preservam ID |
 | API com capabilities, erros estáveis e idempotência | Implementada; índice persistido e reserva durante upload |
 | TXT, JSONL, manifesto e blocos com timestamps | Implementados |
-| Pacote Python e skill para resumo pelo agente | Implementados |
+| Pacote Python e skills separadas de transcrição e resumo | Implementados; cada skill funciona sem a outra |
 | Validação de fala representativa | Pendente |
 
 ## Correções desta revisão
@@ -20,6 +20,7 @@ O plano de uso agêntico está implementado para um serviço interno com um work
 - Erros HTTP após o envio em run/wait preservam o ID e instrução de retomada.
 - Idempotência é consultada novamente após reservar a chave, fechando uma janela de duplicação entre uploads concorrentes.
 - Limpeza de blocos restrita aos arquivos TXT/JSONL com nomes gerados, em vez de qualquer `block-*`.
+- Transcrição e interpretação foram separadas em `wisp-transcribe` e `summarize-transcript`. A primeira termina nos artefatos com timestamps; a segunda aceita texto, TXT, JSONL ou blocos sem depender do serviço, da CLI ou de credenciais. O fluxo combinado usa as duas nessa ordem, sem dependência obrigatória entre elas.
 
 ## Pendências
 

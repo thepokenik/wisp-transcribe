@@ -1,12 +1,22 @@
 # Wisp Transcribe
 
-Wisp Transcribe is a CPU transcription service with an HTTP API and a Python CLI. The server runs Whisper; the consuming agent produces the summary. No LLM provider account, SDK, MCP server, or provider-specific tools are required by this project.
+Wisp Transcribe is a CPU transcription service with an HTTP API and a Python CLI. The server runs Whisper; transcription and interpretation are separate skills. No LLM provider account, SDK, MCP server, or provider-specific tools are required by this project.
 
 ## Using the service
 
-For transcription or summarization, read [the skill](skills/wisp-transcribe/SKILL.md). It can also be supplied as plain Markdown to agents without skill discovery. Agents that do not load AGENTS.md automatically should be told to read this file explicitly.
+Choose the skill by the request:
 
-The client needs Python 3.10+, shell execution, local file access, and network access to the service. Install it with `python -m pip install ./cli` in an isolated environment. The command is `transcribe`; `python -m transcription_cli` is equivalent. Configure `TRANSCRIPTION_URL` and `TRANSCRIPTION_API_KEY` in the agent process environment. The CLI does not load `.env`; do not print the key.
+| Request | Skill |
+| --- | --- |
+| "Transcribe this video" | [`wisp-transcribe`](skills/wisp-transcribe/SKILL.md) |
+| "Summarize this transcript" | [`summarize-transcript`](skills/summarize-transcript/SKILL.md) |
+| "Transcribe and summarize" | Both, in that order |
+
+In the combined flow, `summarize-transcript` receives the TXT, JSONL or block files, with the manifest for context, after transcription completes. Neither skill requires the other: transcription can finish without a summary, and the summary skill works on any external transcript without Wisp, the CLI or credentials.
+
+For transcription, read [the skill](skills/wisp-transcribe/SKILL.md). It can also be supplied as plain Markdown to agents without skill discovery. For interpretation of an existing transcript, read [summarize-transcript](skills/summarize-transcript/SKILL.md); it is self-contained and needs no service access. Agents that do not load AGENTS.md automatically should be told to read this file explicitly.
+
+The transcription client needs Python 3.10+, shell execution, local file access, and network access to the service. Install it with `python -m pip install ./cli` in an isolated environment. The command is `transcribe`; `python -m transcription_cli` is equivalent. Configure `TRANSCRIPTION_URL` and `TRANSCRIPTION_API_KEY` in the agent process environment. The CLI does not load `.env`; do not print the key.
 
 Use the [README](README.md) for server setup, API-only clients, CLI flags, and exit codes. If setup or credentials are missing, report that dependency rather than installing a server or choosing another transcription provider implicitly. Starting or publishing the service is separate from using an existing endpoint.
 
